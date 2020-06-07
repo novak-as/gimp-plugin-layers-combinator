@@ -1,4 +1,5 @@
- 
+(define (script-fu-tileset-generator)
+
   (define (strings-join delimiter list)
     (let loop ((current "") (values list))
       (if (null? values)
@@ -168,7 +169,6 @@
     (car (gimp-item-get-name layerNumber))
   )
 
-(define (script-fu-combinatorix-merge)
   (let* (
          (imageWidth 50)
          (imageHeight 50)
@@ -204,15 +204,15 @@
   )
 )
 
-(script-fu-register "script-fu-combinatorix-merge"
-                    _"Create all possible combinations"
-                    _"Create all possible combinations from existing layers"
+(script-fu-register "script-fu-tileset-generator"
+                    _"Create all possible tiles"
+                    _"Create all possible tiles from existing layers"
                     ""
                     ""
                     ""
                     "*"  
                     )
 
-(script-fu-menu-register "script-fu-combinatorix-merge"
+(script-fu-menu-register "script-fu-tileset-generator"
                          "<Image>/Tools/")
 
