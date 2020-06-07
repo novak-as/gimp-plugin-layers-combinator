@@ -169,10 +169,10 @@
     (car (gimp-item-get-name layerNumber))
   )
 
-  (let* (
-         (imageWidth 50)
-         (imageHeight 50)
+  (let* (         
          (originalImage (aref (cadr (gimp-image-list)) 0))
+         (imageWidth (list-ref (gimp-image-width originalImage) 0))
+         (imageHeight (list-ref (gimp-image-height originalImage) 0))
          (groupsCount (car (gimp-image-get-layers originalImage)))
          )
 
