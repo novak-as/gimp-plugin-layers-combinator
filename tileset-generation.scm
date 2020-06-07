@@ -1,4 +1,4 @@
-(define (script-fu-tileset-generator)
+(define (script-fu-tileset-generator prefix separator)
 
   (define (strings-join delimiter list)
     (let loop ((current "") (values list))
@@ -174,8 +174,6 @@
          (imageHeight 50)
          (originalImage (aref (cadr (gimp-image-list)) 0))
          (groupsCount (car (gimp-image-get-layers originalImage)))
-         (imageNamePrefix "image")
-         (imageNameLayerSeparator "_") 
          )
 
           (for-each (combine-groups '() (iterate-all-groups '() groupsCount (get-gimp-groups originalImage))) (lambda (group)
@@ -183,8 +181,8 @@
               (newImage (car (gimp-image-new imageWidth imageHeight RGB)))
             )            
               (gimp-image-set-filename newImage 
-                      (string-append imageNamePrefix 
-                        (strings-join imageNameLayerSeparator (map get-original-layer-name group))))  
+                      (string-append prefix
+                        (strings-join separator (map get-original-layer-name group))))  
 
               (for-each group (lambda (layerId)
                 (gimp-image-insert-layer 
@@ -211,6 +209,8 @@
                     ""
                     ""
                     "*"  
+                    SF-STRING "Prefix" "image"
+                    SF-STRING "Separator" "_"
                     )
 
 (script-fu-menu-register "script-fu-tileset-generator"
