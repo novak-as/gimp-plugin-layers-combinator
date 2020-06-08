@@ -31,8 +31,9 @@ Expected layers structure:
     - ...
 ```
 
-Adding `!` to the layer group name will force script to use every possible combination of layers inside this group
-Adding `^` to the layer name will force script to use layer's name as a suffix
+Adding `!` to the layer group name will force script to use every possible combination of layers inside this group 
+
+Adding `^` to the layer name will force script to use layer name as a suffix
 
 ### 2. Tools/Flatten and save all
 
