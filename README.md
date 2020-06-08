@@ -14,11 +14,11 @@ Copy both files to the default GIMP scripts directory (`C:\Users\<username>\AppD
 
 Will generate all possible combinations based on setup of initial image
 
-```
 Expected layers structure:
+```
 - TopMostLayerGroup
-    - layer1
-    - layer2
+    - layer1^
+    - layer2^
     - ...
 - LayerGroup2!
     - layer1
@@ -32,6 +32,7 @@ Expected layers structure:
 ```
 
 Adding `!` to the layer group name will force script to use every possible combination of layers inside this group
+Adding `^` to the layer name will force script to use layer's name as a suffix
 
 ### 2. Tools/Flatten and save all
 

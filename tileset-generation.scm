@@ -181,6 +181,32 @@
     (car (gimp-item-get-name layerNumber))
   )
 
+  (define (get-group-name-components group)
+       
+    (define (_get-group-name-components result suffix group)
+      (if (null? group)
+        (append result suffix)
+
+        (let (
+          (layerName (get-original-layer-name (car group)))
+        )
+          (if (equal? #\^ (last-char layerName))
+            (_get-group-name-components 
+              result 
+              (append suffix (list (substring layerName 0 (-- (string-length layerName)))))
+              (cdr group))
+            (_get-group-name-components 
+              (append result (list layerName))
+              suffix
+              (cdr group))
+            ))
+        )
+
+    )
+
+    (_get-group-name-components '() '() group)    
+  )
+
   (let* (         
          (originalImage (aref (cadr (gimp-image-list)) 0))
          (imageWidth (list-ref (gimp-image-width originalImage) 0))
@@ -194,7 +220,7 @@
             )            
               (gimp-image-set-filename newImage 
                       (string-append prefix
-                        (strings-join separator (map get-original-layer-name group))))  
+                        (strings-join separator (get-group-name-components group))))  
 
               (for-each group (lambda (layerId)
                 (gimp-image-insert-layer 
