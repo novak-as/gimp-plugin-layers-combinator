@@ -51,7 +51,19 @@
         (loop (cdr rest))
         )
       )
-    )    
+    )
+
+  (define (drop-last input)
+
+    (define (_drop-last head tail)
+      (if (null? (cdr tail)) 
+          head
+          (_drop-last (append head (list (car tail))) (cdr tail))    
+          )    
+      )
+
+    (_drop-last '() input)    
+    )        
 
   (define (iterate to groups)
     (define (_iterate from to result)
@@ -67,10 +79,10 @@
 
   (define (iterate-all amount groups)
     (define (_iterate-all from to direction set picks result)
-    
+      
       (if (and (true? direction) (<= (++ from) to))
           (let (
-                (set (push set (list-ref groups from)))
+                (set (append set (list (list-ref groups from))))
                 )
             (_iterate-all (++ from) to #t set (push picks #t) (push result set))      
             )
@@ -82,7 +94,7 @@
                   (if (equal? set '())
                       result
                       (if (true? (peek picks))        
-                          (_iterate-all (-- from) to #f (pop set) (pop picks) result)
+                          (_iterate-all (-- from) to #f (drop-last set) (pop picks) result)
                           (_iterate-all (-- from) to #f set (pop picks) result)))
                   (display "")
                   )
@@ -209,7 +221,7 @@
                     ""
                     ""
                     "*"  
-                    SF-STRING "Prefix" "image"
+                    SF-STRING "Prefix" "img"
                     SF-STRING "Separator" "_"
                     )
 
