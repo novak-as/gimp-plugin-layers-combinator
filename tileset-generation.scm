@@ -69,23 +69,32 @@
     (define (_iterate from to result)
 
       (if (= from to)
-          result
-          (_iterate (++ from) to (push result (list-ref groups from))))
-      
-      )
+        result          
+
+        (let (
+          (currentLayer (list-ref groups from))
+        )
+          (if (is-visible? currentLayer)
+            (_iterate (++ from) to (push result (list-ref groups from)))
+            (_iterate (++ from) to result)
+          ))      
+      )        
+    )
 
     (_iterate 0 to '())
-    )
+  )
 
   (define (iterate-all amount groups)
     (define (_iterate-all from to direction set picks result)
       
       (if (and (true? direction) (<= (++ from) to))
           (let (
-                (set (append set (list (list-ref groups from))))
-                )
+                (set (if (is-visible? (list-ref groups from)) 
+                        (append set (list (list-ref groups from)))
+                        set)))
             (_iterate-all (++ from) to #t set (push picks #t) (push result set))      
-            )
+          )
+
           (if (false? direction)
               (if (true? (peek picks)) 
                   (_iterate-all (++ from) to #t set (push (replace picks #f) #t) result)
@@ -123,7 +132,7 @@
           )
       )
     (_combine-list '() list2 list1 list2)
-    )  
+  )  
 
   (define (combine-groups result groups)
     (if (null? groups)
@@ -179,6 +188,10 @@
 
   (define (get-original-layer-name layerNumber)
     (car (gimp-item-get-name layerNumber))
+  )
+
+  (define (is-visible? layerNumber)  
+    (equal? 1 (car (gimp-item-get-visible layerNumber)))
   )
 
   (define (get-group-name-components group)
