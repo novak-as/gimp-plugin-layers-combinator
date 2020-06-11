@@ -35,11 +35,7 @@
     (push (pop stack) val))
 
   (define (true? val)
-
-    (if (equal? #t val)
-        #t
-        #f
-        ))
+    (equal? #t val))
 
   (define (false? val)
     (not (true? val)))
@@ -53,6 +49,18 @@
       )
     )
 
+  (define (list-count val)
+
+    (define (_list-count result tail)
+      (if (null? tail)
+        result
+        (_list-count (++ result) (cdr tail))
+      )
+    )
+
+    (_list-count 0 val)
+  )
+
   (define (drop-last input)
 
     (define (_drop-last head tail)
@@ -63,7 +71,24 @@
       )
 
     (_drop-last '() input)    
-    )        
+    )
+
+  (define (filter func values)
+
+    (define (_filter func values result)
+      
+      (if (null? values)
+          result
+          (if (true? (func (car values)))
+              (_filter func (cdr values) (append result (list (car values))))
+              (_filter func (cdr values) result)
+              )
+      
+          )  
+      )
+
+    (_filter func values '())
+    )    
 
   (define (iterate to groups)
     (define (_iterate from to result)
@@ -74,10 +99,7 @@
         (let (
           (currentLayer (list-ref groups from))
         )
-          (if (is-visible? currentLayer)
-            (_iterate (++ from) to (push result (list-ref groups from)))
-            (_iterate (++ from) to result)
-          ))      
+          (_iterate (++ from) to (push result (list-ref groups from))))      
       )        
     )
 
@@ -89,9 +111,8 @@
       
       (if (and (true? direction) (<= (++ from) to))
           (let (
-                (set (if (is-visible? (list-ref groups from)) 
-                        (append set (list (list-ref groups from)))
-                        set)))
+                (set (append set (list (list-ref groups from))))
+              )                
             (_iterate-all (++ from) to #t set (push picks #t) (push result set))      
           )
 
@@ -173,8 +194,8 @@
         (let* (
           (currentGroupIndex (car tail))
           (currentGroupName (car (gimp-item-get-name currentGroupIndex)))
-          (currentGroupItemsCount (car (gimp-item-get-children currentGroupIndex)))
-          (currentGroupChildrens (vector->list (cadr (gimp-item-get-children currentGroupIndex))))
+          (currentGroupChildrens (filter is-visible? (vector->list (cadr (gimp-item-get-children currentGroupIndex)))))
+          (currentGroupItemsCount (list-count currentGroupChildrens))
         )        
           (_get-gimp-groups 
             (push result (list currentGroupIndex currentGroupName currentGroupItemsCount currentGroupChildrens))
@@ -183,7 +204,7 @@
       )      
     )
 
-    (_get-gimp-groups '() (vector->list (cadr (gimp-image-get-layers image))))  
+    (_get-gimp-groups '() (vector->list (cadr (gimp-image-get-layers image))))
   )
 
   (define (get-original-layer-name layerNumber)
@@ -227,29 +248,30 @@
          (groupsCount (car (gimp-image-get-layers originalImage)))
          )
 
-          (for-each (combine-groups '() (iterate-all-groups '() groupsCount (get-gimp-groups originalImage))) (lambda (group)
-            (let* (
-              (newImage (car (gimp-image-new imageWidth imageHeight RGB)))
-            )            
-              (gimp-image-set-filename newImage 
-                      (string-append prefix
-                        (strings-join separator (get-group-name-components group))))  
+          (for-each (combine-groups '() (iterate-all-groups '() groupsCount (get-gimp-groups originalImage)))
+            (lambda (group)
+              (let* (
+                (newImage (car (gimp-image-new imageWidth imageHeight RGB)))
+              )            
+                (gimp-image-set-filename newImage 
+                        (string-append prefix
+                          (strings-join separator (get-group-name-components group))))  
 
-              (for-each group (lambda (layerId)
-                (gimp-image-insert-layer 
-                                      newImage
-                                      (head (gimp-layer-new newImage imageWidth imageHeight RGBA-IMAGE 
-                                              (car (gimp-item-get-name layerId))
-                                              100 LAYER-MODE-NORMAL))
-                                      0 0)
-                (gimp-image-set-active-layer originalImage layerId)
-                (gimp-edit-copy (car (gimp-image-get-active-layer originalImage)))
-                (gimp-floating-sel-anchor (car (gimp-edit-paste (car (gimp-image-get-active-layer newImage)) TRUE)))
-              ))
+                (for-each group (lambda (layerId)
+                  (gimp-image-insert-layer 
+                                        newImage
+                                        (head (gimp-layer-new newImage imageWidth imageHeight RGBA-IMAGE 
+                                                (car (gimp-item-get-name layerId))
+                                                100 LAYER-MODE-NORMAL))
+                                        0 0)
+                  (gimp-image-set-active-layer originalImage layerId)
+                  (gimp-edit-copy (car (gimp-image-get-active-layer originalImage)))
+                  (gimp-floating-sel-anchor (car (gimp-edit-paste (car (gimp-image-get-active-layer newImage)) TRUE)))
+                ))
 
-              (gimp-display-new newImage)            
-            )
-          ))         
+                (gimp-display-new newImage)            
+              )
+            ))         
   )
 )
 
