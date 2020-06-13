@@ -1,5 +1,6 @@
 (define (script-fu-tileset-generator prefix separator)
 
+  ; strings
   (define (strings-join delimiter list)
     (let loop ((current "") (values list))
       (if (null? values)
@@ -8,9 +9,34 @@
       )
     )
 
+  (define (string-rest line)
+    (substring line 1 (string-length line)))
+
   (define (last-char string)
     (string-ref string (- (string-length string) 1)))
 
+  (define (string-split delimiter line)
+
+    (define (_string-split result currentSeg delimiter line)
+
+      (if (equal? "" line)
+          (append result (list currentSeg))
+
+          (let (
+                (currentChar (string-ref line 0))
+                )
+
+            (if (equal? delimiter currentChar)
+                (_string-split (append result (list currentSeg)) "" delimiter (string-rest line))
+                (_string-split result (string-append currentSeg (string currentChar)) delimiter (string-rest line))          
+                ))    
+          ))
+
+    (_string-split '() "" delimiter line)
+    
+    )  
+
+  ;
   (define (++ a)
     (+ 1 a)
     )
@@ -88,8 +114,142 @@
       )
 
     (_filter func values '())
+    )   
+
+  ;options 
+  (define (get-options-text-segment name)
+    (define (_get-options-text-segment result isOpen line)
+      (if (equal? "" line)
+          result
+          (let (
+                (currentChar (string-ref line 0))
+                )
+            (if (not isOpen)
+                (_get-options-text-segment result (equal? #\[ currentChar) (string-rest line))
+
+                (if (equal? #\] currentChar)
+                    result
+
+                    (_get-options-text-segment (string-append result (string currentChar)) #t (string-rest line))
+                    )           
+                ))
+          )
+      )
+
+
+    (_get-options-text-segment "" #f name)
+  )
+
+  (define (string->option val)
+    (cond
+      ((equal? "min" val) 'min)
+      ((equal? "max" val) 'max)
+      ((equal? "combine" val) 'combine)
+      (error (string-append "Unknown option " val))
+      )    
+    )
+
+(define (get-options options)
+
+  (define (get-options result options)
+
+    (if (null? options)
+        result
+
+        (let (
+              (words (string-split #\= (car options)))
+              )
+          (get-options (append result (list (list (string->option (list-ref words 0)) (list-ref words 1)))) (cdr options))
+          )
+    
+        )
+    )
+
+  (get-options '() options)
+  )
+
+  (define (get-options-default)
+    '((min "1")
+      (max "*")
+      (combine "seq"))
+    )
+
+  (define (option-get key set)
+
+    (if (equal? key (list-ref (car set) 0))
+        (car set)
+        (option-get key (cdr set))
+        )  
+    )
+
+  (define (option-get-value key set)
+
+    (list-ref (option-get key set) 1)
+    
+    )
+
+  (define (option-remove key set)
+
+    (define (option-remove key set result)
+
+      (if (null? set)
+          result
+          
+          (if (equal? key (list-ref (car set) 0))
+              (option-remove key (cdr set) result)
+              (option-remove key (cdr set) (append result (list (car set)))))
+      
+          )
+      )
+
+    (option-remove key set '())
+    
+    )
+
+  (define (option-change option set)
+    (append (option-remove (list-ref option 0) set) (list option))
+    )
+
+  (define (options-override set newSet)
+    (if (null? newSet)
+        set
+        (options-override (option-change (car newSet) set) (cdr newSet))
+        ))
+
+  (define (options-from-name name)
+
+    (let ((segment (get-options-text-segment name)))
+      (if (equal? "" segment)
+          (get-options-default)
+
+          (options-override
+          (get-options-default)
+          (get-options (string-split #\space segment))
+          )
+          ))
     )    
 
+  (define (set-valid? set option)
+    (let (
+          (length (list-count set))
+          )
+      (if (< length (string->number (option-get-value 'min option)))
+          #f
+
+          (let ((maxValue (option-get-value 'max option)))
+
+            (if (equal? "*" maxValue)
+                #t
+                (if (> length (string->number (option-get-value 'max option)))
+                    #f
+                    #t)
+            
+                )       
+            ))
+      )
+    )    
+
+  ;iterators
   (define (iterate to groups)
     (define (_iterate from to result)
 
@@ -106,12 +266,12 @@
     (_iterate 0 to '())
   )
 
-  (define (iterate-all amount groups)
+  (define (iterate-all amount group)
     (define (_iterate-all from to direction set picks result)
       
       (if (and (true? direction) (<= (++ from) to))
           (let (
-                (set (append set (list (list-ref groups from))))
+                (set (append set (list (list-ref group from))))
               )                
             (_iterate-all (++ from) to #t set (push picks #t) (push result set))      
           )
@@ -163,27 +323,30 @@
   )
 
   (define (iterate-all-groups result amount groups)
+    
     (if (< (-- amount) 0)
         result
-        (let (
+        (let* (
               (currentGroup (car groups))
+              (options (options-from-name (list-ref currentGroup 1)))
+              (set-valid-for-option? (lambda (set) (set-valid? set options)))
               )
-          (if (equal? #\! (last-char (list-ref currentGroup 1)))
+          (if (equal? "mix" (option-get-value 'combine options))
               (iterate-all-groups (append result
                                           (list(list
                                                 (list-ref currentGroup 0)
                                                 (list-ref currentGroup 1)
-                                                (iterate-all (list-ref currentGroup 2) (list-ref currentGroup 3))))
+                                                (filter set-valid-for-option? (iterate-all (list-ref currentGroup 2) (list-ref currentGroup 3)))))
                                           ) (-- amount) (cdr groups))
               (iterate-all-groups (append result
                                           (list(list
                                                 (list-ref currentGroup 0)
                                                 (list-ref currentGroup 1)
-                                                (map list (iterate (list-ref currentGroup 2) (list-ref currentGroup 3)))))
+                                                (filter set-valid-for-option? (map list (iterate (list-ref currentGroup 2) (list-ref currentGroup 3))))))
                                           ) (-- amount) (cdr groups))
               ))
         )
-    )    
+    )   
 
   ; gimp-specific
   (define (get-gimp-groups image)
