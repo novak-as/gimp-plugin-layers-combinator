@@ -1,6 +1,6 @@
 # Tileset Generator
 
-## How to setup
+## How to install ScriptFu
 
 Copy both files to a separate folder and add it to the list under `Edit\Preferences\Folders\Scripts` 
 
@@ -8,12 +8,16 @@ Copy both files to a separate folder and add it to the list under `Edit\Preferen
 
 Copy both files to the default GIMP scripts directory (`C:\Users\<username>\AppData\Roaming\GIMP\2.10\scripts` or `C:\Program Files\GIMP 2\share\gimp\2.0\scripts`)
 
+**OR**
+
+Check official documentation at https://docs.gimp.org/en/install-script-fu.html
+
 ## How to use
 
 ### 1. Tools/Create all possible tiles
 ---
 
-Will generate all possible combinations based on setup of initial image
+Will generate all possible combinations based on setup of the initial image
 
 Expected layers structure:
 ```
@@ -40,8 +44,9 @@ Possible options:
     * `seq` = pick every single layer i.e. `[[1], [2]]`
     * `mix` = pick every possible combinations of layer in this layer group, i.e. `[[1], [1, 2], [2]]`
 
-Possible modificators:
+Possible modificators (only 1 can be applied):
 1) `^` = use layer name as a suffix
+2) `-` = don't add layer name to the final name
 
 **Example**
 ```
@@ -69,3 +74,4 @@ Will generate set of images
 ### 2. Tools/Flatten and save all
 
 Will merge all layers for **EVERY** opened images and save them as a .png file
+

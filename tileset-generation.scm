@@ -388,17 +388,21 @@
           (layerName (get-original-layer-name (car group)))
         )
           (if (equal? #\^ (last-char layerName))
-            (_get-group-name-components 
-              result 
-              (append suffix (list (substring layerName 0 (-- (string-length layerName)))))
-              (cdr group))
-            (_get-group-name-components 
-              (append result (list layerName))
-              suffix
-              (cdr group))
-            ))
-        )
+              (_get-group-name-components 
+                                          result 
+                                          (append suffix (list (substring layerName 0 (-- (string-length layerName)))))
+                                          (cdr group))
 
+              (if (equal? #\- (last-char layerName))
+                (_get-group-name-components result suffix (cdr group))
+                (_get-group-name-components 
+                                            (append result (list layerName))
+                                            suffix
+                                            (cdr group))
+                )
+            )
+          )
+        )
     )
 
     (_get-group-name-components '() '() group)    
