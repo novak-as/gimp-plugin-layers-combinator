@@ -1,4 +1,4 @@
-(define (script-fu-tileset-generator prefix separator)
+(define (script-fu-tileset-generator prefix separator isSilent)
 
   ; strings
   (define (strings-join delimiter list)
@@ -408,6 +408,15 @@
     (_get-group-name-components '() '() group)    
   )
 
+  (define (flatten-and-save! image)
+    (let (
+        (mergedLayer (car (gimp-image-merge-visible-layers image CLIP-TO-IMAGE)))
+        (filename (string-append (list-ref (gimp-image-get-name image) 0) ".png"))
+    )
+        (file-png-save-defaults RUN-NONINTERACTIVE image mergedLayer filename filename)
+    ) 
+  )
+
   (let* (         
          (originalImage (aref (cadr (gimp-image-list)) 0))
          (imageWidth (list-ref (gimp-image-width originalImage) 0))
@@ -433,12 +442,20 @@
                                         0 0)
                   (gimp-image-set-active-layer originalImage layerId)
                   (gimp-edit-copy (car (gimp-image-get-active-layer originalImage)))
-                  (gimp-floating-sel-anchor (car (gimp-edit-paste (car (gimp-image-get-active-layer newImage)) TRUE)))
+                  (gimp-floating-sel-anchor (car (gimp-edit-paste (car (gimp-image-get-active-layer newImage)) TRUE)))                
                 ))
 
-                (gimp-display-new newImage)            
+                (if isSilent
+                  (begin 
+                    (flatten-and-save! newImage)
+                    (gimp-image-delete newImage)
+                  )
+
+                  (gimp-display-new newImage)
+                )                 
               )
-            ))         
+            )             
+          )
   )
 )
 
@@ -451,6 +468,7 @@
                     "*"  
                     SF-STRING "Prefix" "img"
                     SF-STRING "Separator" "_"
+                    SF-TOGGLE "Silent mode" TRUE
                     )
 
 (script-fu-menu-register "script-fu-tileset-generator"
