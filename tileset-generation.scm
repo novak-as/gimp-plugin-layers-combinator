@@ -361,7 +361,7 @@
           (currentGroupItemsCount (list-count currentGroupChildrens))
         )        
           (_get-gimp-groups 
-            (push result (list currentGroupIndex currentGroupName currentGroupItemsCount currentGroupChildrens))
+            (append result (list (list currentGroupIndex currentGroupName currentGroupItemsCount currentGroupChildrens)))
             (cdr tail)
           ))        
       )      
