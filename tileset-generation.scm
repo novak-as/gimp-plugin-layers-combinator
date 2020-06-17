@@ -49,16 +49,8 @@
     (append (list value) stack)
     )
 
-  (define (pop stack)
-    (cdr stack)
-    )
-
-  (define (peek stack)
-    (car stack)
-    )
-
   (define (replace stack val)
-    (push (pop stack) val))
+    (push (cdr stack) val))
 
   (define (true? val)
     (equal? #t val))
@@ -277,15 +269,15 @@
           )
 
           (if (false? direction)
-              (if (true? (peek picks)) 
+              (if (true? (car picks)) 
                   (_iterate-all (++ from) to #t set (push (replace picks #f) #t) result)
-                  (_iterate-all (-- from) to #f set (pop picks) result))
+                  (_iterate-all (-- from) to #f set (cdr picks) result))
               (if (= from to)
                   (if (equal? set '())
                       result
-                      (if (true? (peek picks))        
-                          (_iterate-all (-- from) to #f (drop-last set) (pop picks) result)
-                          (_iterate-all (-- from) to #f set (pop picks) result)))
+                      (if (true? (car picks))        
+                          (_iterate-all (-- from) to #f (drop-last set) (cdr picks) result)
+                          (_iterate-all (-- from) to #f set (cdr picks) result)))
                   (display "")
                   )
               )
