@@ -2,10 +2,10 @@
 
   ; strings
   (define (strings-join delimiter list)
-    (let loop ((current "") (values list))
+    (let strings-join ((current "") (values list))
       (if (null? values)
           current
-          (loop (string-append current delimiter (car values)) (cdr values)))
+          (strings-join (string-append current delimiter (car values)) (cdr values)))
       )
     )
 
@@ -16,8 +16,7 @@
     (string-ref string (- (string-length string) 1)))
 
   (define (string-split delimiter line)
-
-    (define (_string-split result currentSeg delimiter line)
+    (let string-split ((result '()) (currentSeg "") (delimiter delimiter) (line line))
 
       (if (equal? "" line)
           (append result (list currentSeg))
@@ -27,14 +26,11 @@
                 )
 
             (if (equal? delimiter currentChar)
-                (_string-split (append result (list currentSeg)) "" delimiter (string-rest line))
-                (_string-split result (string-append currentSeg (string currentChar)) delimiter (string-rest line))          
+                (string-split (append result (list currentSeg)) "" delimiter (string-rest line))
+                (string-split result (string-append currentSeg (string currentChar)) delimiter (string-rest line))          
                 ))    
-          ))
-
-    (_string-split '() "" delimiter line)
-    
-    )  
+          ))    
+    )
 
   ;
   (define (++ a)
@@ -68,68 +64,58 @@
     )
 
   (define (list-count val)
-
-    (define (_list-count result tail)
+    (let list-count ((result 0) (tail val))
       (if (null? tail)
-        result
-        (_list-count (++ result) (cdr tail))
+          result
+          (list-count (++ result) (cdr tail))
+          )
       )
     )
 
-    (_list-count 0 val)
-  )
-
   (define (drop-last input)
-
-    (define (_drop-last head tail)
+    (let drop-last ((head '()) (tail input))
       (if (null? (cdr tail)) 
           head
-          (_drop-last (append head (list (car tail))) (cdr tail))    
+          (drop-last (append head (list (car tail))) (cdr tail))    
           )    
       )
-
-    (_drop-last '() input)    
     )
 
   (define (filter func values)
-
-    (define (_filter func values result)
-      
+    (let filter ((func func) (values values) (result '()))      
       (if (null? values)
           result
           (if (true? (func (car values)))
-              (_filter func (cdr values) (append result (list (car values))))
-              (_filter func (cdr values) result)
+              (filter func (cdr values) (append result (list (car values))))
+              (filter func (cdr values) result)
               )
       
           )  
       )
-
-    (_filter func values '())
     )   
 
   ;options 
-  (define (get-options-text-segment name)
-    (define (_get-options-text-segment result isOpen line)
+
+  ;line: string like "some_random_text[key1=val1 key2=val2]"
+  ;result: string like "key1=val1 key2=val2"
+  (define (get-options-text-segment line)
+    (let get-options-text-segment ((result "") (isOpen #f) (line line))
       (if (equal? "" line)
           result
           (let (
                 (currentChar (string-ref line 0))
                 )
             (if (not isOpen)
-                (_get-options-text-segment result (equal? #\[ currentChar) (string-rest line))
+                (get-options-text-segment result (equal? #\[ currentChar) (string-rest line))
 
                 (if (equal? #\] currentChar)
                     result
 
-                    (_get-options-text-segment (string-append result (string currentChar)) #t (string-rest line))
+                    (get-options-text-segment (string-append result (string currentChar)) #t (string-rest line))
                     )           
                 ))
           )
       )
-
-
-    (_get-options-text-segment "" #f name)
   )
 
   (define (string->option val)
@@ -141,24 +127,23 @@
       )    
     )
 
-(define (get-options options)
+  ; options: list of "key=value" strings
+  ; result: list of splitten options i.e. '(('min "val1") ('max "val2"))
+  (define (get-options options)
 
-  (define (get-options result options)
+    (let get-options ((result '()) (options options))
+      (if (null? options)
+          result
 
-    (if (null? options)
-        result
-
-        (let (
-              (words (string-split #\= (car options)))
-              )
-          (get-options (append result (list (list (string->option (list-ref words 0)) (list-ref words 1)))) (cdr options))
+          (let (
+                (words (string-split #\= (car options)))
+                )
+            (get-options (append result (list (list (string->option (list-ref words 0)) (list-ref words 1)))) (cdr options))
+            )
+      
           )
-    
-        )
+      )
     )
-
-  (get-options '() options)
-  )
 
   (define (get-options-default)
     '((min "1")
@@ -181,9 +166,7 @@
     )
 
   (define (option-remove key set)
-
-    (define (option-remove key set result)
-
+    (let option-remove ((key key) (set set) (result '()))
       (if (null? set)
           result
           
@@ -192,10 +175,7 @@
               (option-remove key (cdr set) (append result (list (car set)))))
       
           )
-      )
-
-    (option-remove key set '())
-    
+      )    
     )
 
   (define (option-change option set)
@@ -243,7 +223,7 @@
 
   ;iterators
   (define (iterate to groups)
-    (define (_iterate from to result)
+    (let iterate ((from 0) (to to) (result '()))
 
       (if (= from to)
         result          
@@ -251,60 +231,55 @@
         (let (
           (currentLayer (list-ref groups from))
         )
-          (_iterate (++ from) to (push result (list-ref groups from))))      
+          (iterate (++ from) to (push result (list-ref groups from))))      
       )        
     )
-
-    (_iterate 0 to '())
   )
 
   (define (iterate-all amount group)
-    (define (_iterate-all from to direction set picks result)
+    (let iterate-all ((from 0) (to amount) (direction #t) (set '()) (picks '(#t)) (result '()))
       
       (if (and (true? direction) (<= (++ from) to))
           (let (
                 (set (append set (list (list-ref group from))))
               )                
-            (_iterate-all (++ from) to #t set (push picks #t) (push result set))      
+            (iterate-all (++ from) to #t set (push picks #t) (push result set))      
           )
 
           (if (false? direction)
               (if (true? (car picks)) 
-                  (_iterate-all (++ from) to #t set (push (replace picks #f) #t) result)
-                  (_iterate-all (-- from) to #f set (cdr picks) result))
+                  (iterate-all (++ from) to #t set (push (replace picks #f) #t) result)
+                  (iterate-all (-- from) to #f set (cdr picks) result))
               (if (= from to)
                   (if (equal? set '())
                       result
                       (if (true? (car picks))        
-                          (_iterate-all (-- from) to #f (drop-last set) (cdr picks) result)
-                          (_iterate-all (-- from) to #f set (cdr picks) result)))
+                          (iterate-all (-- from) to #f (drop-last set) (cdr picks) result)
+                          (iterate-all (-- from) to #f set (cdr picks) result)))
                   (display "")
                   )
               )
           )
       )
-
-    (_iterate-all 0 amount #t '() '(#t) '())
     )
 
   (define (combine-list list1 list2)
-    (define (_combine-list set olist2 list1 list2)
+    (let combine-list ((set '()) (olist2 list2) (list1 list1) (list2 list2))
 
       (if (null? olist2)
           (if (null? list1)
               set
-              (_combine-list (push set (car list1)) olist2 (cdr list1) list2)
+              (combine-list (push set (car list1)) olist2 (cdr list1) list2)
             )
           (if (null? list1)
               set
               (if (null? list2)
-                  (_combine-list set olist2 (cdr list1) olist2)
-                  (_combine-list (push set (append (car list2) (car list1))) olist2 list1 (cdr list2))
+                  (combine-list set olist2 (cdr list1) olist2)
+                  (combine-list (push set (append (car list2) (car list1))) olist2 list1 (cdr list2))
                   )
               )
           )
       )
-    (_combine-list '() list2 list1 list2)
   )  
 
   (define (combine-groups result groups)
@@ -343,7 +318,7 @@
   ; gimp-specific
   (define (get-gimp-groups image)
 
-    (define (_get-gimp-groups result tail)
+    (let get-gimp-groups ((result '()) (tail (vector->list (cadr (gimp-image-get-layers image)))))
       (if (null? tail)
         result
         (let* (
@@ -352,14 +327,12 @@
           (currentGroupChildrens (filter is-visible? (vector->list (cadr (gimp-item-get-children currentGroupIndex)))))
           (currentGroupItemsCount (list-count currentGroupChildrens))
         )        
-          (_get-gimp-groups 
+          (get-gimp-groups 
             (append result (list (list currentGroupIndex currentGroupName currentGroupItemsCount currentGroupChildrens)))
             (cdr tail)
           ))        
       )      
     )
-
-    (_get-gimp-groups '() (vector->list (cadr (gimp-image-get-layers image))))
   )
 
   (define (get-original-layer-name layerNumber)
@@ -372,7 +345,7 @@
 
   (define (get-group-name-components group)
        
-    (define (_get-group-name-components result suffix group)
+    (let get-group-name-components ((result '()) (suffix '()) (group group))
       (if (null? group)
         (append result suffix)
 
@@ -380,14 +353,14 @@
           (layerName (get-original-layer-name (car group)))
         )
           (if (equal? #\^ (last-char layerName))
-              (_get-group-name-components 
+              (get-group-name-components 
                                           result 
                                           (append suffix (list (substring layerName 0 (-- (string-length layerName)))))
                                           (cdr group))
 
               (if (equal? #\- (last-char layerName))
-                (_get-group-name-components result suffix (cdr group))
-                (_get-group-name-components 
+                (get-group-name-components result suffix (cdr group))
+                (get-group-name-components 
                                             (append result (list layerName))
                                             suffix
                                             (cdr group))
@@ -395,9 +368,7 @@
             )
           )
         )
-    )
-
-    (_get-group-name-components '() '() group)    
+    )  
   )
 
   (define (flatten-and-save! image)
