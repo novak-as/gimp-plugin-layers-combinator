@@ -1,4 +1,4 @@
-(define (script-fu-tileset-generator prefix separator isSilent)
+(define (script-fu-tileset-generator prefix separator useInnerFolder isSilent)
 
   ; strings
   (define (strings-join delimiter list)
@@ -32,6 +32,20 @@
           ))    
     )
 
+  ; (string-remove-after "1.test" #\.) -> "1"
+  ; (string-remove-after "1.2.3" #\.) -> "1.2"
+  ; (string-remove-after "1" #\.) -> "1"
+  (define (string-remove-after name separator)
+
+    (let iterate ((left name) (original name))
+      (if (equal? (string-length left) 0)
+          original        
+          (if (equal? (last-char left) separator)
+              (substring left 0 (- (string-length left) 1))
+              (iterate (substring left 0 (- (string-length left) 1)) original)
+              )
+          )))
+
   ;
   (define (++ a)
     (+ 1 a)
@@ -48,8 +62,10 @@
   (define (replace stack val)
     (push (cdr stack) val))
 
-  (define (true? val)
-    (equal? #t val))
+
+  (define (true? val)  
+    (or (equal? #t val) (equal? TRUE val))
+  )
 
   (define (false? val)
     (not (true? val)))
@@ -371,14 +387,19 @@
     )  
   )
 
-  (define (flatten-and-save! image)
-    (let (
-        (mergedLayer (car (gimp-image-merge-visible-layers image CLIP-TO-IMAGE)))
-        (filename (string-append (list-ref (gimp-image-get-name image) 0) ".png"))
-    )
-        (file-png-save-defaults RUN-NONINTERACTIVE image mergedLayer filename filename)
-    ) 
-  )
+  (define (flatten-and-save! originalImage image useSeparateFolder)
+      (let* (
+          (mergedLayer (car (gimp-image-merge-visible-layers image CLIP-TO-IMAGE)))
+          (dirname (string-remove-after (car (gimp-image-get-filename originalImage)) #\.))
+          (filename (string-append (list-ref (gimp-image-get-name image) 0) ".png"))
+          (filepath (string-append dirname DIR-SEPARATOR filename))
+      )
+          (if (true? useSeparateFolder)
+            (file-png-save-defaults RUN-NONINTERACTIVE image mergedLayer filepath filepath)
+            (file-png-save-defaults RUN-NONINTERACTIVE image mergedLayer filename filename)
+          )
+      ) 
+    )  
 
   (let* (         
          (originalImage (aref (cadr (gimp-image-list)) 0))
@@ -408,9 +429,9 @@
                   (gimp-floating-sel-anchor (car (gimp-edit-paste (car (gimp-image-get-active-layer newImage)) TRUE)))                
                 ))
 
-                (if isSilent
+                (if (true? isSilent)
                   (begin 
-                    (flatten-and-save! newImage)
+                    (flatten-and-save! originalImage newImage useInnerFolder)
                     (gimp-image-delete newImage)
                   )
 
@@ -431,6 +452,7 @@
                     "*"  
                     SF-STRING "Prefix" "img"
                     SF-STRING "Separator" "_"
+                    SF-TOGGLE "Save in the separate folder (should be created manually)" TRUE
                     SF-TOGGLE "Silent mode" TRUE
                     )
 
