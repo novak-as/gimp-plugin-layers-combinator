@@ -1,20 +1,16 @@
-# Tileset Generator
+# Layers Combinator
 
-## How to install ScriptFu
+## Purpose
 
-Copy both files to a separate folder and add it to the list under `Edit\Preferences\Folders\Scripts` 
+To regenerate set of images (with ability to review and manually modify any of them) after dependent resources where changed. Originaly used for tileset generation, i.e. regenarating dozen images after one of a backgrounds were modified
 
-**OR**
-
-Copy both files to the default GIMP scripts directory (`C:\Users\<username>\AppData\Roaming\GIMP\2.10\scripts` or `C:\Program Files\GIMP 2\share\gimp\2.0\scripts`)
-
-**OR**
+## How to install
 
 Check official documentation at https://docs.gimp.org/en/install-script-fu.html
 
 ## How to use
 
-### 1. Tools/Create all possible tiles
+### 1. Tools/Combine Layers
 ---
 
 Will generate all possible combinations based on setup of the initial image
@@ -75,3 +71,10 @@ Will generate set of images
 
 Will merge all layers for **EVERY** opened images and save them as a .png file
 
+## Bugs and feature requests
+
+https://github.com/novak-as/gimp-plugin-layers-combinator/issues
+
+## Q&A
+
+https://github.com/novak-as/gimp-plugin-layers-combinator/discussions

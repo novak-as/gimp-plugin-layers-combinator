@@ -1,4 +1,4 @@
-(define (script-fu-tileset-generator prefix separator useInnerFolder isSilent)
+(define (script-fu-layers-combinator prefix separator useInnerFolder isSilent)
 
   ; strings
   (define (strings-join delimiter list)
@@ -443,9 +443,9 @@
   )
 )
 
-(script-fu-register "script-fu-tileset-generator"
-                    _"Create all possible tiles"
-                    _"Create all possible tiles from existing layers"
+(script-fu-register "script-fu-layers-combinator"
+                    _"Create all layers combinations"
+                    _"Create all layers combinations"
                     ""
                     ""
                     ""
@@ -456,6 +456,6 @@
                     SF-TOGGLE "Silent mode" TRUE
                     )
 
-(script-fu-menu-register "script-fu-tileset-generator"
+(script-fu-menu-register "script-fu-layers-combinator"
                          "<Image>/Tools/")
 
